@@ -438,6 +438,10 @@ class SoundBoard {
 
     static stopLoop(identifyingPath) {
         SoundBoard.getSoundFromIdentifyingPath(identifyingPath).loop = false;
+
+        // We clear the intervals otherwise a loop with delay will play one last time after the loop has been stopped
+        SoundBoard.audioHelper.delayIntervals.clear(identifyingPath);
+
         $('#soundboard-app .btn').filter(`[uuid=${$.escapeSelector(identifyingPath)}]`).removeClass('loop-active');
     }
 

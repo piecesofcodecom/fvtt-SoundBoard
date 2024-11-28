@@ -7,22 +7,23 @@ class SBAudioHelper {
     }
 
     delayIntervals = {
-        intervals: new Set(), make(callback, time) {
+        intervals: new Map(), make(sound, callback, time) {
             var newInterval = setInterval(callback, time);
-            this.intervals.add(newInterval);
+            this.intervals.set(sound, newInterval);
             return newInterval;
         },
 
         // clear a single interval
-        clear(id) {
-            this.intervals.delete(id);
-            return clearInterval(id);
+        clear(sound) {
+            let interval_id = this.intervals.get(sound)
+            this.intervals.delete(interval_id);
+            return clearInterval(interval_id);
         },
 
         // clear all intervals
         clearAll() {
-            for (var id of this.intervals) {
-                this.clear(id);
+            for (var sound of this.intervals.keys()) {
+                this.clear(sound);
             }
         }
     };
@@ -74,7 +75,6 @@ class SBAudioHelper {
         volume *= game.settings.get('core', 'globalInterfaceVolume');
 
         var soundNode = new foundry.audio.Sound(src);
-        soundNode.loop = sound.loop;
         soundNode.addEventListener('end', () => {
             this.removeActiveSound(soundNode);
             try {
@@ -86,18 +86,16 @@ class SBAudioHelper {
                 if (!sound?.loopDelay || sound?.loopDelay === 0) {
                     SoundBoard.playSound(sound.identifyingPath, true);
                 } else {
-                    let interval = this.delayIntervals.make(() => {
+                    let interval = this.delayIntervals.make(sound.identifyingPath, () => {
                         SoundBoard.playSound(sound.identifyingPath, true);
-                        this.delayIntervals.clear(interval);
+                        this.delayIntervals.clear(sound.identifyingPath);
                     }, sound.loopDelay * 1000);
                 }
             }
         });
 
         soundNode.addEventListener('stop', () => {
-            if (sound?.loop) {
-                sound.loop = false;
-            }
+            // Do nothing
         });
 
         soundNode.addEventListener("play", () => {
